@@ -1,65 +1,262 @@
-import Image from "next/image";
+"use client";
+
+import {
+  ArrowCircleUpIcon
+} from "@phosphor-icons/react/dist/csr/ArrowCircleUp";
+import {
+  ArrowCircleDownIcon
+} from "@phosphor-icons/react/dist/csr/ArrowCircleDown";
+import {
+  CurrencyDollarIcon
+} from "@phosphor-icons/react/dist/csr/CurrencyDollar";
+import {
+  XIcon
+} from "@phosphor-icons/react/dist/csr/X";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 export default function Home() {
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [valor, setValor] = useState("");
+  const [categoria, setCategoria] = useState("");
+  const [tipo, setTipo] = useState("entrada");
+
+  const [transactions, setTransactions] = useState([]);
+
+  const entradas = transactions.reduce((total, item) => {
+    return item.tipo === "entrada" ? total + Number(item.valor) : total;
+  }, 0);
+
+  const saidas = transactions.reduce((total, item) => {
+    return item.tipo === "saida" ? total + Number(item.valor) : total;
+  }, 0);
+
+  const total = entradas - saidas;
+
+  function handleCloseModal() {
+    setOpen(false);
+  }
+
+  function handleOpenModal() {
+    setOpen(true);
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault();
+
+    if (!title.trim() || !categoria.trim() || !valor) {
+      return;
+    }
+
+    const newTransaction = {
+      title: title.trim(),
+      valor: Number(valor),
+      categoria: categoria.trim(),
+      tipo,
+      date: new Date().toLocaleDateString("pt-BR"),
+    };
+
+    setTransactions((currentTransactions) => [
+      ...currentTransactions,
+      newTransaction,
+    ]);
+    handleLimparCampo();
+    handleCloseModal();
+  }
+
+  function handleLimparCampo() {
+    setTitle("");
+    setValor("");
+    setCategoria("");
+    setTipo("entrada");
+  }
+
+  async function getTransactions (){
+    const transactions = await axios.get("http://localhost:3001/transactions")
+    setTransactions(transactions.data)
+    
+  }
+ 
+  useEffect(()=>{}, {getTransactions}, []);
+
+  function submit (){
+    const date = new Date().toLocaleDateString("pt-BR");
+    axios.post("http://localhost:3001/transactions",{
+      title,
+      valor,
+      categoria,
+      tipo,
+      date,
+    })
+    
+    setOpen(false)
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="bg-purple">
+        <div className="max-w-280 mx-auto pt-8 px-4 pb-48 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-full bg-purple-light flex items-center justify-center text-white font-bold text-xl">
+              <CurrencyDollarIcon size={24} />
+            </div>
+            <span className="text-white text-2xl font-semibold">Digital Money</span>
+          </div>
+
+          <button
+            onClick={handleOpenModal}
+            className="bg-purple-light text-white border-none py-3 px-8 rounded cursor-pointer font-medium text-base hover:brightness-90 transition-all"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            Nova transação
+          </button>
         </div>
+      </header>
+
+      {/* Summary Cards */}
+      <main className="max-w-280 mx-auto px-4 -mt-16">
+        <div className="grid grid-cols-3 gap-8 mb-16">
+          {/* Entradas */}
+          <div className="bg-shape p-6 rounded shadow-[0_0_30px_rgba(0,0,0,0.4)]">
+            <header className="flex items-center justify-between">
+              <p className="text-text-title text-base">Entradas</p>
+              <ArrowCircleDownIcon size={32} className="text-green" />
+            </header>
+            <strong className="block mt-4 text-3xl font-medium text-text-title">
+              R$ {entradas.toFixed(2)}
+            </strong>
+          </div>
+
+          {/* Saídas */}
+          <div className="bg-shape p-6 rounded shadow-[0_0_30px_rgba(0,0,0,0.4)]">
+            <header className="flex items-center justify-between">
+              <p className="text-text-title text-base">Saídas</p>
+              <ArrowCircleUpIcon size={32} className="text-red" />
+            </header>
+            <strong className="block mt-4 text-3xl font-medium text-text-title">
+              R$ {saidas.toFixed(2)}
+            </strong>
+          </div>
+
+          {/* Total */}
+          <div className="bg-green p-6 rounded text-white shadow-[0_0_30px_rgba(0,0,0,0.4)]">
+            <header className="flex items-center justify-between">
+              <p className="text-base">Total</p>
+              <CurrencyDollarIcon size={32} />
+            </header>
+            <strong className="block mt-4 text-3xl font-medium">
+              R$ {total.toFixed(2)}
+            </strong>
+          </div>
+        </div>
+
+        {/* Transactions Table */}
+        <table className="w-full" style={{ borderSpacing: "0 0.5rem", borderCollapse: "separate" }}>
+          <thead>
+            <tr>
+              <th className="text-text-body font-normal py-4 px-8 text-left leading-6">
+                Titulo
+              </th>
+              <th className="text-text-body font-normal py-4 px-8 text-left leading-6">
+                Valor
+              </th>
+              <th className="text-text-body font-normal py-4 px-8 text-left leading-6">
+                Categoria
+              </th>
+              <th className="text-text-body font-normal py-4 px-8 text-left leading-6">
+                Data
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {transactions.map((transaction, index) => (
+              <tr key={index}>
+                <td>{transaction.title}</td>
+                <td>{transaction.valor}</td>
+                <td>{transaction.categoria}</td>
+                <td>{transaction.date}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </main>
+
+      {/* Modal */}
+      <div
+        onClick={handleCloseModal}
+        className={"fixed inset-0 bg-overlay items-center justify-center z-50 " + (open ? "flex" : "hidden")}
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="bg-background p-12 rounded w-full max-w-lg relative"
+        >
+          <button
+            onClick={handleCloseModal}
+            className="absolute top-6 right-6 bg-transparent border-none text-2xl cursor-pointer text-text-body hover:text-text-title transition-colors"
+          >
+            <XIcon size={24} />
+          </button>
+
+          <h2 className="text-text-title text-2xl mb-8 font-semibold">
+            Cadastrar transação
+          </h2>
+
+          <form onSubmit={handleSubmit}>
+            <input
+              value={title}
+              onChange={(ev) => setTitle(ev.target.value)}
+              type="text"
+              placeholder="Titulo"
+              className="w-full py-4 px-6 rounded border border-input-border bg-input-bg text-base mb-4 outline-none placeholder:text-text-body"
+            />
+
+            <input
+              value={valor}
+              onChange={(ev) => setValor(ev.target.value)}
+              type="number"
+              placeholder="Valor"
+              className="w-full py-4 px-6 rounded border border-input-border bg-input-bg text-base mb-4 outline-none placeholder:text-text-body"
+            />
+
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              <button
+                type="button"
+                onClick={() => setTipo("entrada")}
+                className="flex items-center justify-center gap-2 py-4 rounded border border-input-border text-base cursor-pointer text-text-title transition-colors bg-input-bg"
+              >
+                <ArrowCircleDownIcon size={20} className="text-green" />
+                Entrada
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setTipo("saida")}
+                className="flex items-center justify-center gap-2 py-4 rounded border border-input-border text-base cursor-pointer text-text-title transition-colors bg-input-bg"
+              >
+                <ArrowCircleUpIcon size={20} className="text-red" />
+                Saída
+              </button>
+            </div>
+
+            <input
+              value={categoria}
+              onChange={(ev) => setCategoria(ev.target.value)}
+              type="text"
+              placeholder="Categoria"
+              className="w-full py-4 px-6 rounded border border-input-border bg-input-bg text-base mb-6 outline-none placeholder:text-text-body"
+            />
+
+            <button
+              onClick={submit}
+              type="submit"
+              className="w-full py-5 bg-green text-white border-none rounded text-base font-semibold cursor-pointer hover:brightness-90 transition-all"
+            >
+              Cadastrar
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }
