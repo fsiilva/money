@@ -1,0 +1,30 @@
+{
+  "transactions": [
+    {
+      "title": "Salario",
+      "value": "229000",
+      "category": "Finança",
+      "type": "entry",
+      "date": "10/04/2026",
+      "id": "FgB5Rp9h7Os"
+    },
+    {
+      "title": "dsfkjdsfk",
+      "value": "2121",
+      "category": "dsadsada",
+      "type": "entry",
+      "date": "10/04/2026",
+      "id": "rUdy2jW5Muw"
+    }
+  ],
+
+  "logins": [
+    {
+      "email": "user@example.com",
+      "password": "password123",
+      "id": 1
+    }
+  ],
+
+  "$schema": "./node_modules/json-server/schema.json"
+}

@@ -1,96 +1,45 @@
-"use client";
+'use client'
 
-import {
-  ArrowCircleUpIcon
-} from "@phosphor-icons/react/dist/csr/ArrowCircleUp";
-import {
-  ArrowCircleDownIcon
-} from "@phosphor-icons/react/dist/csr/ArrowCircleDown";
-import {
-  CurrencyDollarIcon
-} from "@phosphor-icons/react/dist/csr/CurrencyDollar";
-import {
-  XIcon
-} from "@phosphor-icons/react/dist/csr/X";
-import { useEffect, useState } from "react";
-import axios from "axios";
+import { useState } from "react";
+import Link from "next/link";
+import { CurrencyDollarIcon, EnvelopeSimpleIcon, EyeIcon, EyeSlashIcon, LockKeyIcon } from "@phosphor-icons/react";
+import { useRouter } from "next/navigation";
+import instance from "@/lib/api";
 
-export default function Home() {
-  const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [valor, setValor] = useState("");
-  const [categoria, setCategoria] = useState("");
-  const [tipo, setTipo] = useState("entrada");
 
-  const [transactions, setTransactions] = useState([]);
+export default function Login() {
+  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const router = useRouter();
 
-  const entradas = transactions.reduce((total, item) => {
-    return item.tipo === "entrada" ? total + Number(item.valor) : total;
-  }, 0);
-
-  const saidas = transactions.reduce((total, item) => {
-    return item.tipo === "saida" ? total + Number(item.valor) : total;
-  }, 0);
-
-  const total = entradas - saidas;
-
-  function handleCloseModal() {
-    setOpen(false);
+  function handleUpdateEmail(event) {
+    setEmail(event.target.value);
   }
 
-  function handleOpenModal() {
-    setOpen(true);
+  function handleUpdatePassword(event) {
+    setPassword(event.target.value);
   }
 
-  function handleSubmit(e) {
-    e.preventDefault();
+  async function handleSubmit(event) {
+    event.preventDefault();
+    if (!email || !password) {
+      alert("preencha os campos");
+      return
+    }
+    const response = await instance({
+      url: 'logins',
+      method: 'GET'
 
-    if (!title.trim() || !categoria.trim() || !valor) {
+    })
+    const userExists = response.data.find((user) => {
+      return user.email === email && user.password === password;
+    });
+    if (!userExists) {
+      alert("Email ou senha inválidos");
       return;
     }
-
-    const newTransaction = {
-      title: title.trim(),
-      valor: Number(valor),
-      categoria: categoria.trim(),
-      tipo,
-      date: new Date().toLocaleDateString("pt-BR"),
-    };
-
-    setTransactions((currentTransactions) => [
-      ...currentTransactions,
-      newTransaction,
-    ]);
-    handleLimparCampo();
-    handleCloseModal();
-  }
-
-  function handleLimparCampo() {
-    setTitle("");
-    setValor("");
-    setCategoria("");
-    setTipo("entrada");
-  }
-
-  async function getTransactions (){
-    const transactions = await axios.get("http://localhost:3001/transactions")
-    setTransactions(transactions.data)
-    
-  }
- 
-  useEffect(()=>{}, {getTransactions}, []);
-
-  function submit (){
-    const date = new Date().toLocaleDateString("pt-BR");
-    axios.post("http://localhost:3001/transactions",{
-      title,
-      valor,
-      categoria,
-      tipo,
-      date,
-    })
-    
-    setOpen(false)
+    router.push("/dashboard");
   }
 
   return (
@@ -102,161 +51,74 @@ export default function Home() {
             <div className="w-10 h-10 rounded-full bg-purple-light flex items-center justify-center text-white font-bold text-xl">
               <CurrencyDollarIcon size={24} />
             </div>
-            <span className="text-white text-2xl font-semibold">Digital Money</span>
+            <span className="text-white text-2xl font-semibold">
+              Digital Money
+            </span>
           </div>
 
-          <button
-            onClick={handleOpenModal}
-            className="bg-purple-light text-white border-none py-3 px-8 rounded cursor-pointer font-medium text-base hover:brightness-90 transition-all"
-          >
-            Nova transação
-          </button>
         </div>
       </header>
 
-      {/* Summary Cards */}
-      <main className="max-w-280 mx-auto px-4 -mt-16">
-        <div className="grid grid-cols-3 gap-8 mb-16">
-          {/* Entradas */}
-          <div className="bg-shape p-6 rounded shadow-[0_0_30px_rgba(0,0,0,0.4)]">
-            <header className="flex items-center justify-between">
-              <p className="text-text-title text-base">Entradas</p>
-              <ArrowCircleDownIcon size={32} className="text-green" />
-            </header>
-            <strong className="block mt-4 text-3xl font-medium text-text-title">
-              R$ {entradas.toFixed(2)}
-            </strong>
+      <main className="w-full h-full flex justify-center items-center">
+        <form onSubmit={handleSubmit} className="w-96 bg-white -mt-40 drop-shadow-2xl rounded p-8 space-y-6">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-semibold text-text-title">Acesse sua conta</h1>
+            <p className="text-text-body">Gerencie suas finanças com o Digital Money.</p>
           </div>
 
-          {/* Saídas */}
-          <div className="bg-shape p-6 rounded shadow-[0_0_30px_rgba(0,0,0,0.4)]">
-            <header className="flex items-center justify-between">
-              <p className="text-text-title text-base">Saídas</p>
-              <ArrowCircleUpIcon size={32} className="text-red" />
-            </header>
-            <strong className="block mt-4 text-3xl font-medium text-text-title">
-              R$ {saidas.toFixed(2)}
-            </strong>
-          </div>
-
-          {/* Total */}
-          <div className="bg-green p-6 rounded text-white shadow-[0_0_30px_rgba(0,0,0,0.4)]">
-            <header className="flex items-center justify-between">
-              <p className="text-base">Total</p>
-              <CurrencyDollarIcon size={32} />
-            </header>
-            <strong className="block mt-4 text-3xl font-medium">
-              R$ {total.toFixed(2)}
-            </strong>
-          </div>
-        </div>
-
-        {/* Transactions Table */}
-        <table className="w-full" style={{ borderSpacing: "0 0.5rem", borderCollapse: "separate" }}>
-          <thead>
-            <tr>
-              <th className="text-text-body font-normal py-4 px-8 text-left leading-6">
-                Titulo
-              </th>
-              <th className="text-text-body font-normal py-4 px-8 text-left leading-6">
-                Valor
-              </th>
-              <th className="text-text-body font-normal py-4 px-8 text-left leading-6">
-                Categoria
-              </th>
-              <th className="text-text-body font-normal py-4 px-8 text-left leading-6">
-                Data
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {transactions.map((transaction, index) => (
-              <tr key={index}>
-                <td>{transaction.title}</td>
-                <td>{transaction.valor}</td>
-                <td>{transaction.categoria}</td>
-                <td>{transaction.date}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </main>
-
-      {/* Modal */}
-      <div
-        onClick={handleCloseModal}
-        className={"fixed inset-0 bg-overlay items-center justify-center z-50 " + (open ? "flex" : "hidden")}
-      >
-        <div
-          onClick={(e) => e.stopPropagation()}
-          className="bg-background p-12 rounded w-full max-w-lg relative"
-        >
-          <button
-            onClick={handleCloseModal}
-            className="absolute top-6 right-6 bg-transparent border-none text-2xl cursor-pointer text-text-body hover:text-text-title transition-colors"
-          >
-            <XIcon size={24} />
-          </button>
-
-          <h2 className="text-text-title text-2xl mb-8 font-semibold">
-            Cadastrar transação
-          </h2>
-
-          <form onSubmit={handleSubmit}>
-            <input
-              value={title}
-              onChange={(ev) => setTitle(ev.target.value)}
-              type="text"
-              placeholder="Titulo"
-              className="w-full py-4 px-6 rounded border border-input-border bg-input-bg text-base mb-4 outline-none placeholder:text-text-body"
-            />
-
-            <input
-              value={valor}
-              onChange={(ev) => setValor(ev.target.value)}
-              type="number"
-              placeholder="Valor"
-              className="w-full py-4 px-6 rounded border border-input-border bg-input-bg text-base mb-4 outline-none placeholder:text-text-body"
-            />
-
-            <div className="grid grid-cols-2 gap-2 mb-4">
-              <button
-                type="button"
-                onClick={() => setTipo("entrada")}
-                className="flex items-center justify-center gap-2 py-4 rounded border border-input-border text-base cursor-pointer text-text-title transition-colors bg-input-bg"
-              >
-                <ArrowCircleDownIcon size={20} className="text-green" />
-                Entrada
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setTipo("saida")}
-                className="flex items-center justify-center gap-2 py-4 rounded border border-input-border text-base cursor-pointer text-text-title transition-colors bg-input-bg"
-              >
-                <ArrowCircleUpIcon size={20} className="text-red" />
-                Saída
-              </button>
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 bg-input-bg outline-input-border outline rounded p-4">
+              <EnvelopeSimpleIcon size={24} color="#969CB3" />
+              <input
+                id="email"
+                onChange={handleUpdateEmail}
+                className="w-full outline-0" type="email" placeholder="E-mail" />
             </div>
 
-            <input
-              value={categoria}
-              onChange={(ev) => setCategoria(ev.target.value)}
-              type="text"
-              placeholder="Categoria"
-              className="w-full py-4 px-6 rounded border border-input-border bg-input-bg text-base mb-6 outline-none placeholder:text-text-body"
-            />
+            <div>
+              <div className="flex items-center gap-3 bg-input-bg outline-input-border outline rounded p-4">
+                <LockKeyIcon color="#969CB3" size={24} />
+                <input
+                  id="password"
+                  onChange={handleUpdatePassword}
+                  className="w-full outline-0"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Senha"
+                />
+                <button
+                  type="button"
 
-            <button
-              onClick={submit}
-              type="submit"
-              className="w-full py-5 bg-green text-white border-none rounded text-base font-semibold cursor-pointer hover:brightness-90 transition-all"
-            >
-              Cadastrar
-            </button>
-          </form>
-        </div>
-      </div>
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="text-text-body cursor-pointer"
+                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                >
+                  {showPassword ? <EyeSlashIcon size={24} /> : <EyeIcon size={24} />}
+                </button>
+              </div>
+              <div className="flex justify-end mt-2">
+                <Link href="/forgot-password" className="text-text-body text-sm hover:underline">
+                  Esqueceu a senha?
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <button
+            id="entrar"
+            type="submit"
+            className="w-full bg-green hover:bg-green-light transition-colors text-white font-semibold rounded py-4 cursor-pointer"
+          >
+            Entrar
+          </button>
+
+          <p className="text-center text-text-body text-sm">
+            Ainda não tem conta?{" "}
+            <Link href="/signup" className="text-purple font-bold hover:underline">
+              Cadastre-se
+            </Link>
+          </p>
+        </form>
+      </main>
     </div>
   );
 }
